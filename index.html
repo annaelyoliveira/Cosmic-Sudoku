@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cosmic Sudoku - Survival</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-deep-space: #030712;
+      --neon-cyan: #00f0ff;
+      --neon-blue: #0077ff;
+      --neon-red: #ff3366;
+      --neon-green: #00ff66;
+      --glass-bg: rgba(6, 18, 41, 0.6);
+      --glass-border: rgba(0, 240, 255, 0.3);
+      --cell-bg: rgba(10, 25, 55, 0.6);
+      --text-color: #e2f1ff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: var(--bg-deep-space);
+      font-family: 'Rajdhani', sans-serif;
+      color: var(--text-color);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .galaxy-bg {
+      position: absolute;
+      width: 100vw;
+      height: 100vh;
+      top: 0;
+      left: 0;
+      z-index: 0;
+      background: 
+        radial-gradient(circle at 50% 20%, rgba(0, 240, 255, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(121, 40, 202, 0.2) 0%, transparent 50%),
+        radial-gradient(ellipse at center, #071530 0%, #020611 100%);
+    }
+
+    .stars {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        radial-gradient(2px 2px at 20px 30px, #ffffff, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 40px 70px, rgba(0, 240, 255, 0.8), rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 90px 40px, #fff, rgba(0,0,0,0));
+      background-size: 350px 350px;
+      opacity: 0.5;
+    }
+
+    .game-container {
+      position: relative;
+      z-index: 10;
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 25px 35px;
+      box-shadow: 0 0 50px rgba(0, 240, 255, 0.15);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+
+    h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.8rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      background: linear-gradient(180deg, #ffffff 0%, var(--neon-cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+    }
+
+    .info-panel {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 420px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    .lives { color: var(--neon-red); text-shadow: 0 0 8px rgba(255, 51, 102, 0.5); }
+    .difficulty { color: var(--neon-cyan); text-transform: uppercase; }
+
+    .sudoku-board {
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      grid-template-rows: repeat(9, 1fr);
+      width: 410px;
+      height: 410px;
+      max-width: 85vw;
+      max-height: 85vw;
+      border: 2px solid var(--neon-cyan);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.25);
+      background: rgba(0, 0, 0, 0.4);
+    }
+
+    .cell {
+      width: 100%;
+      height: 100%;
+      border: 1px solid rgba(0, 240, 255, 0.12);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: var(--cell-bg);
+    }
+
+    .cell input {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      border: none;
+      text-align: center;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--neon-cyan);
+      outline: none;
+    }
+
+    .cell:nth-child(3n) { border-right: 2px solid rgba(0, 240, 255, 0.5); }
+    .cell:nth-child(9n) { border-right: none; }
+    .sudoku-board > div:nth-child(n+19):nth-child(-n+27),
+    .sudoku-board > div:nth-child(n+46):nth-child(-n+54) {
+      border-bottom: 2px solid rgba(0, 240, 255, 0.5);
+    }
+
+    .cell.given input {
+      color: #ffffff;
+      font-weight: 900;
+      text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+    }
+
+    .cell.error input {
+      color: var(--neon-red) !important;
+      text-shadow: 0 0 10px var(--neon-red);
+    }
+
+    .cell.correct input {
+      color: var(--neon-green) !important;
+    }
+
+    .status-msg {
+      font-size: 0.95rem;
+      color: var(--neon-cyan);
+      letter-spacing: 1px;
+      height: 22px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="galaxy-bg"></div>
+  <div class="stars"></div>
+
+  <main class="game-container">
+    <h1>Cosmic Sudoku</h1>
+    
+    <div class="info-panel">
+      <span class="difficulty" id="diffLabel">Nível: Fácil</span>
+      <span class="lives" id="livesLabel">Vidas: ❤️❤️❤️</span>
+    </div>
+
+    <div class="sudoku-board" id="board"></div>
+
+    <div class="status-msg" id="statusMsg">Preencha os campos corretos!</div>
+  </main>
+
+  <script>
+    const boardElement = document.getElementById('board');
+    const statusMsg = document.getElementById('statusMsg');
+    const livesLabel = document.getElementById('livesLabel');
+    const diffLabel = document.getElementById('diffLabel');
+
+    // Cole a sua API Key real aqui dentro das aspas:
+    const FIXED_API_KEY = "emn99kfBkNix2bGfhyq9Ro71X7rPhsCXBkPaUPEr".trim(); 
+
+    let currentDifficultyIndex = 0;
+    const difficulties = ['easy', 'medium', 'hard'];
+    const difficultyNames = { 'easy': 'Fácil', 'medium': 'Médio', 'hard': 'Difícil' };
+    
+    let lives = 3;
+    let currentSolution = [];
+    let currentPuzzle = [];
+
+    const fallbackPuzzles = {
+      easy: {
+        puzzle: [[5,3,0,0,7,0,0,0,0], [6,0,0,1,9,5,0,0,0], [0,9,8,0,0,0,0,6,0], [8,0,0,0,6,0,0,0,3], [4,0,0,8,0,3,0,0,1], [7,0,0,0,2,0,0,0,6], [0,6,0,0,0,0,2,8,0], [0,0,0,4,1,9,0,0,5], [0,0,0,0,8,0,0,7,9]],
+        solution: [[5,3,4,6,7,8,9,1,2], [6,7,2,1,9,5,3,4,8], [1,9,8,3,4,2,5,6,7], [8,5,9,7,6,1,4,2,3], [4,2,6,8,5,3,7,9,1], [7,1,3,9,2,4,8,5,6], [9,6,1,5,3,7,2,8,4], [2,8,7,4,1,9,6,3,5], [3,4,5,2,8,6,1,7,9]]
+      },
+      medium: {
+        puzzle: [[0,0,0,2,6,0,7,0,1], [6,8,0,0,7,0,0,9,0], [1,9,0,0,0,4,5,0,0], [8,2,0,1,0,0,0,4,0], [0,0,4,6,0,2,9,0,0], [0,5,0,0,0,3,0,2,8], [0,0,9,3,0,0,0,7,4], [0,4,0,0,5,0,0,3,6], [7,0,3,0,1,8,0,0,0]],
+        solution: [[4,3,5,2,6,9,7,8,1], [6,8,2,5,7,1,4,9,3], [1,9,7,8,3,4,5,6,2], [8,2,6,1,9,5,3,4,7], [3,7,4,6,8,2,9,1,5], [9,5,1,7,4,3,6,2,8], [5,1,9,3,2,6,8,7,4], [2,4,8,9,5,7,1,3,6], [7,6,3,4,1,8,2,5,9]]
+      },
+      hard: {
+        puzzle: [[0,0,0,6,0,0,4,0,0], [7,0,0,0,0,3,6,0,0], [0,0,0,0,9,1,0,8,0], [0,0,0,0,0,0,0,0,0], [0,5,0,1,8,0,0,0,3], [0,0,0,3,0,6,0,4,5], [0,4,0,2,0,0,0,6,0], [9,0,3,0,0,0,0,0,0], [0,2,0,0,0,0,1,0,0]],
+        solution: [[5,8,1,6,2,7,4,3,9], [7,9,2,8,4,3,6,5,1], [3,6,4,5,9,1,7,8,2], [4,3,8,9,5,2,1,7,6], [2,5,6,1,8,4,9,7,3], [1,7,9,3,7,6,8,4,5], [8,4,5,2,1,9,3,6,7], [9,1,3,7,6,5,2,4,8], [6,2,7,4,3,8,1,9,5]]
+      }
+    };
+
+    function createBoardStructure() {
+      boardElement.innerHTML = '';
+      for (let i = 0; i < 81; i++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.maxLength = 1;
+        input.dataset.index = i;
+
+        input.addEventListener('input', handleInput);
+
+        cell.appendChild(input);
+        boardElement.appendChild(cell);
+      }
+    }
+
+    async function loadNewGame() {
+      const diff = difficulties[currentDifficultyIndex];
+      diffLabel.textContent = `Nível: ${difficultyNames[diff]}`;
+      statusMsg.textContent = `Conectando ao setor estelar (${difficultyNames[diff]})...`;
+
+      try {
+        const response = await fetch(`https://api.api-ninjas.com/v1/sudoku?difficulty=${diff}`, {
+          headers: { 'X-Api-Key': FIXED_API_KEY }
+        });
+
+        if (!response.ok) throw new Error('Erro na API');
+
+        const data = await response.json();
+        currentPuzzle = data.puzzle;
+        currentSolution = data.solution;
+        
+        renderBoard();
+        statusMsg.textContent = 'Carregado via API Ninjas com sucesso!';
+      } catch (err) {
+        // Se houver bloqueio de CORS do navegador, ativa o fallback com segurança
+        currentPuzzle = fallbackPuzzles[diff].puzzle;
+        currentSolution = fallbackPuzzles[diff].solution;
+        renderBoard();
+        statusMsg.textContent = `Modo Cósmico Offline (${difficultyNames[diff]}) - Divirta-se!`;
+      }
+    }
+
+    function renderBoard() {
+      const cells = boardElement.querySelectorAll('.cell');
+      let index = 0;
+      
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          const val = currentPuzzle[r][c];
+          const cell = cells[index];
+          const input = cell.querySelector('input');
+
+          cell.className = 'cell';
+          input.value = '';
+          input.removeAttribute('readonly');
+
+          if (val !== 0) {
+            input.value = val;
+            input.setAttribute('readonly', 'true');
+            cell.classList.add('given');
+          }
+          index++;
+        }
+      }
+    }
+
+    function handleInput(e) {
+      const input = e.target;
+      const val = input.value;
+      const index = parseInt(input.dataset.index);
+      const row = Math.floor(index / 9);
+      const col = index % 9;
+      const cell = input.parentElement;
+
+      if (!/[1-9]/.test(val)) {
+        input.value = '';
+        cell.classList.remove('error', 'correct');
+        return;
+      }
+
+      if (parseInt(val) === currentSolution[row][col]) {
+        cell.classList.remove('error');
+        cell.classList.add('correct');
+        input.setAttribute('readonly', 'true');
+        checkWinCondition();
+      } else {
+        cell.classList.add('error');
+        lives--;
+        updateLivesDisplay();
+
+        if (lives <= 0) {
+          handleLifeLossProgression();
+        } else {
+          statusMsg.textContent = `Ops! Número incorreto. Vidas restantes: ${lives}`;
+        }
+      }
+    }
+
+    function updateLivesDisplay() {
+      let hearts = '';
+      for (let i = 0; i < lives; i++) hearts += '❤️';
+      livesLabel.textContent = `Vidas: ${hearts}`;
+    }
+
+    function handleLifeLossProgression() {
+      currentDifficultyIndex++;
+      if (currentDifficultyIndex < difficulties.length) {
+        lives = 3;
+        updateLivesDisplay();
+        statusMsg.textContent = `Vidas esgotadas! Subindo para o nível ${difficultyNames[difficulties[currentDifficultyIndex]]}...`;
+        setTimeout(loadNewGame, 2000);
+      } else {
+        statusMsg.textContent = 'Game Over! Todas as vidas se esgotaram no Difícil.';
+        lockAllInputs();
+      }
+    }
+
+    function checkWinCondition() {
+      const cells = boardElement.querySelectorAll('.cell input');
+      let allFilled = true;
+
+      cells.forEach(input => {
+        if (!input.value) allFilled = false;
+      });
+
+      if (allFilled) {
+        statusMsg.textContent = 'Parabéns! Você completou o Sudoku com sucesso! 🌌✨';
+        lockAllInputs();
+      }
+    }
+
+    function lockAllInputs() {
+      const inputs = boardElement.querySelectorAll('.cell input');
+      inputs.forEach(input => input.setAttribute('readonly', 'true'));
+    }
+
+    createBoardStructure();
+    loadNewGame();
+  </script>
+</body>
+</html>
