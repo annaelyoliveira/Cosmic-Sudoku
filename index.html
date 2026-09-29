@@ -166,6 +166,29 @@
       height: 22px;
       text-align: center;
     }
+
+    /* Botão de Reiniciar na Tela de Parabéns */
+    .restart-btn {
+      display: none;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #030712;
+      background: var(--neon-cyan);
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      cursor: pointer;
+      box-shadow: 0 0 15px var(--neon-cyan);
+      transition: all 0.3s ease;
+      margin-top: 10px;
+    }
+
+    .restart-btn:hover {
+      background: #ffffff;
+      box-shadow: 0 0 25px #ffffff;
+      transform: scale(1.05);
+    }
   </style>
 </head>
 <body>
@@ -177,13 +200,14 @@
     <h1>Cosmic Sudoku</h1>
     
     <div class="info-panel">
-      <span class="difficulty" id="diffLabel">Nível: Fácil</span>
-      <span class="lives" id="livesLabel">Vidas: ❤️❤️❤️</span>
+      <span class="difficulty" id="diffLabel">Nível: Médio</span>
+      <span class="lives" id="livesLabel">Vidas: ❤️❤️</span>
     </div>
 
     <div class="sudoku-board" id="board"></div>
 
     <div class="status-msg" id="statusMsg">Preencha os campos corretos!</div>
+    <button class="restart-btn" id="restartBtn" onclick="resetGame()">Jogar Novamente</button>
   </main>
 
   <script>
@@ -191,15 +215,16 @@
     const statusMsg = document.getElementById('statusMsg');
     const livesLabel = document.getElementById('livesLabel');
     const diffLabel = document.getElementById('diffLabel');
+    const restartBtn = document.getElementById('restartBtn');
 
     // Cole a sua API Key real aqui dentro das aspas:
     const FIXED_API_KEY = "emn99kfBkNix2bGfhyq9Ro71X7rPhsCXBkPaUPEr".trim(); 
 
-    let currentDifficultyIndex = 0;
+    let currentDifficultyIndex = 1; // Começa no índice 1 (Médio)
     const difficulties = ['easy', 'medium', 'hard'];
     const difficultyNames = { 'easy': 'Fácil', 'medium': 'Médio', 'hard': 'Difícil' };
     
-    let lives = 3;
+    let lives = 2; // Inicia com 2 vidas
     let currentSolution = [];
     let currentPuzzle = [];
 
@@ -237,6 +262,7 @@
     }
 
     async function loadNewGame() {
+      restartBtn.style.display = 'none';
       const diff = difficulties[currentDifficultyIndex];
       diffLabel.textContent = `Nível: ${difficultyNames[diff]}`;
       statusMsg.textContent = `Conectando ao setor estelar (${difficultyNames[diff]})...`;
@@ -255,7 +281,6 @@
         renderBoard();
         statusMsg.textContent = 'Carregado via API Ninjas com sucesso!';
       } catch (err) {
-        // Se houver bloqueio de CORS do navegador, ativa o fallback com segurança
         currentPuzzle = fallbackPuzzles[diff].puzzle;
         currentSolution = fallbackPuzzles[diff].solution;
         renderBoard();
@@ -328,7 +353,7 @@
     function handleLifeLossProgression() {
       currentDifficultyIndex++;
       if (currentDifficultyIndex < difficulties.length) {
-        lives = 3;
+        lives = 2; // Mantém 2 vidas para o próximo nível
         updateLivesDisplay();
         statusMsg.textContent = `Vidas esgotadas! Subindo para o nível ${difficultyNames[difficulties[currentDifficultyIndex]]}...`;
         setTimeout(loadNewGame, 2000);
@@ -347,7 +372,8 @@
       });
 
       if (allFilled) {
-        statusMsg.textContent = 'Parabéns! Você completou o Sudoku com sucesso! 🌌✨';
+        statusMsg.textContent = 'Parabéns você conseguiu!';
+        restartBtn.style.display = 'block';
         lockAllInputs();
       }
     }
@@ -357,7 +383,15 @@
       inputs.forEach(input => input.setAttribute('readonly', 'true'));
     }
 
+    function resetGame() {
+      currentDifficultyIndex = 1; // Reinicia no Médio
+      lives = 2; // Reinicia com 2 vidas
+      updateLivesDisplay();
+      loadNewGame();
+    }
+
     createBoardStructure();
+    updateLivesDisplay();
     loadNewGame();
   </script>
 </body>
