@@ -169,7 +169,6 @@
       text-align: center;
     }
 
-    /* Botão de Reiniciar na Tela de Parabéns */
     .restart-btn {
       display: none;
       font-family: 'Orbitron', sans-serif;
@@ -202,7 +201,7 @@
     <h1>Cosmic Sudoku</h1>
     
     <div class="info-panel">
-      <span class="difficulty" id="diffLabel">Nível: Médio</span>
+      <span class="difficulty" id="diffLabel">Nível: Fácil</span>
       <span class="lives" id="livesLabel">Vidas: ❤️❤️</span>
     </div>
 
@@ -219,14 +218,13 @@
     const diffLabel = document.getElementById('diffLabel');
     const restartBtn = document.getElementById('restartBtn');
 
-    // Cole a sua API Key real aqui dentro das aspas:
     const FIXED_API_KEY = "emn99kfBkNix2bGfhyq9Ro71X7rPhsCXBkPaUPEr".trim(); 
 
-    let currentDifficultyIndex = 1; // Começa no índice 1 (Médio)
+    let currentDifficultyIndex = 0; // Começa no Fácil
     const difficulties = ['easy', 'medium', 'hard'];
     const difficultyNames = { 'easy': 'Fácil', 'medium': 'Médio', 'hard': 'Difícil' };
     
-    let lives = 2; // Inicia com 2 vidas
+    let lives = 2; // Apenas 2 vidas
     let currentSolution = [];
     let currentPuzzle = [];
 
@@ -348,14 +346,14 @@
 
     function updateLivesDisplay() {
       let hearts = '';
-      for (let i = 0; i < lives; i++) hearts += '❤️';
+      for (let i = 0; i < lives; i++) hearts += '❤️️';
       livesLabel.textContent = `Vidas: ${hearts}`;
     }
 
     function handleLifeLossProgression() {
       currentDifficultyIndex++;
       if (currentDifficultyIndex < difficulties.length) {
-        lives = 2; // Mantém 2 vidas para o próximo nível
+        lives = 2; // Reseta para 2 vidas ao mudar de nível
         updateLivesDisplay();
         statusMsg.textContent = `Vidas esgotadas! Subindo para o nível ${difficultyNames[difficulties[currentDifficultyIndex]]}...`;
         setTimeout(loadNewGame, 2000);
@@ -386,8 +384,8 @@
     }
 
     function resetGame() {
-      currentDifficultyIndex = 1; // Reinicia no Médio
-      lives = 2; // Reinicia com 2 vidas
+      currentDifficultyIndex = 0; // Volta para o Fácil
+      lives = 2; // Define 2 vidas
       updateLivesDisplay();
       loadNewGame();
     }
